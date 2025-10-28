@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack Operation & Expression Converter</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #1e90ff;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 40px;
+    }
+
+    .section {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      background: white;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin: 5px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 15px;
+      border: none;
+      background: #1e90ff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0c75d4;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stack-visual {
+      border: 2px solid #333;
+      border-radius: 8px;
+      width: 150px;
+      height: 250px;
+      background: #f0f8ff;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .stack-item {
+      background: #87cefa;
+      border: 1px solid #222;
+      width: 80%;
+      margin: 3px;
+      padding: 5px;
+      text-align: center;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .output-box {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      width: 300px;
+      margin-top: 20px;
+    }
+
+    .log {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      width: 300px;
+      height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    .log-entry {
+      border-bottom: 1px solid #eee;
+      padding: 3px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stack Operations & Expression Converter</h1>
+
+  <!-- Stack Operation Section -->
+  <div class="section">
+    <h2>🧱 Stack Operations</h2>
+    <input type="text" id="stackInput" placeholder="Enter value" />
+    <button onclick="push()">Push</button>
+    <button onclick="pop()">Pop</button>
+    <button onclick="peek()">Peek</button>
+    <button onclick="display()">Display</button>
+    <button onclick="clearStack()">Clear</button>
+
+    <div class="container">
+      <div>
+        <div class="stack-visual" id="stackVisual"></div>
+      </div>
+      <div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expression Converter Section -->
+  <div class="section">
+    <h2>🧮 Expression Converter</h2>
+    <input type="text" id="expression" placeholder="Enter expression (e.g., A+B*C)" />
+    <button onclick="convertInfixToPostfix()">Infix ➜ Postfix</button>
+    <button onclick="convertPostfixToInfix()">Postfix ➜ Infix</button>
+
+    <div class="output-box">
+      <h3>Output:</h3>
+      <p id="output"></p>
+    </div>
+  </div>
+
+  <script>
+    // ---------- STACK OPERATIONS ----------
+    let stack = [];
+
+    function updateStackVisual() {
+      const container = document.getElementById("stackVisual");
+      container.innerHTML = "";
+      stack.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "stack-item";
+        el.textContent = item;
+        container.appendChild(el);
+      });
+    }
+
+    function logAction(msg) {
+      const logDiv = document.getElementById("log");
+      const entry = document.createElement("div");
+      entry.className = "log-entry";
+      entry.textContent = msg;
+      logDiv.prepend(entry);
+    }
+
+    function push() {
+      const val = document.getElementById("stackInput").value.trim();
+      if (val === "") return alert("Enter a value to push!");
+      stack.push(val);
+      logAction(`Pushed '${val}'`);
+      updateStackVisual();
+      document.getElementById("stackInput").value = "";
+    }
+
+    function pop() {
+      if (stack.length === 0) return alert("Stack Underflow!");
+      const popped = stack.pop();
+      logAction(`Popped '${popped}'`);
+      updateStackVisual();
+    }
+
+    function peek() {
+      if (stack.length === 0) return alert("Stack is empty!");
+      const top = stack[stack.length - 1];
+      logAction(`Peeked top element '${top}'`);
+      alert(`Top element: ${top}`);
+    }
+
+    function display() {
+      if (stack.length === 0) logAction("Stack is empty");
+      else logAction(`Stack: [${stack.join(", ")}]`);
+    }
+
+    function clearStack() {
+      stack = [];
+      updateStackVisual();
+      logAction("Cleared stack");
+    }
+
+    // ---------- INFIX TO POSTFIX ----------
+    function convertInfixToPostfix() {
+      const expr = document.getElementById("expression").value.replace(/\s+/g, "");
+      if (!expr) return alert("Enter a valid infix expression!");
+
+      const precedence = { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3 };
+      const stack = [];
+      const output = [];
+
+      for (let token of expr) {
+        if (/[A-Za-z0-9]/.test(token)) {
+          output.push(token);
+        } else if (token === "(") {
+          stack.push(token);
+        } else if (token === ")") {
+          while (stack.length && stack[stack.length - 1] !== "(") {
+            output.push(stack.pop());
+          }
+          stack.pop(); // remove '('
+        } else if (precedence[token]) {
+          while (
+            stack.length &&
+            precedence[stack[stack.length - 1]] >= precedence[token]
+          ) {
+            output.push(stack.pop());
+          }
+          stack.push(token);
+        }
+      }
+
+      while (stack.length) output.push(stack.pop());
+
+      document.getElementById("output").textContent = output.join(" ");
+    }
+
+    // ---------- POSTFIX TO INFIX ----------
+    function convertPostfixToInfix() {
+      const expr = document.getElementById("expression").value.replace(/\s+/g, "");
+      if (!expr) return alert("Enter a valid postfix expression!");
+
+      const stack = [];
+
+      for (let token of expr) {
+        if (/[A-Za-z0-9]/.test(token)) {
+          stack.push(token);
+        } else {
+          const b = stack.pop();
+          const a = stack.pop();
+          const newExpr = `(${a}${token}${b})`;
+          stack.push(newExpr);
+        }
+      }
+
+      document.getElementById("output").textContent = stack.pop();
+    }
+  </script>
+</body>
+</html>
